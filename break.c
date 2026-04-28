@@ -1,21 +1,108 @@
 // hellow world ncurses test
 
 #include <ncurses.h>
+#define PADDLE "<====>"
+#define BALL   "o"
+#define BRICK  "####"
 
 int main() {
 	// start curses mode
 	initscr();
+	// send keypress immediately without needing enter (keep cntrl c for quitting)
+	cbreak();
+	// want to enable function key reading for UI
+	keypad(stdscr, TRUE);
+	// remove printing keypress to the screen
+	noecho();
+	// hide the cursor
+	curs_set(0);
 
-	// print hello world 
-	printw("Hello world !!");
+	// check if the terminal supports colors
+	if (has_colors() == FALSE) {
+		printw("Your terminal does not support color.\n");
+		printw("Press any key to exit.\n");
+		refresh();
+		getch();
+		endwin();
+		return 1;
+	}
 
-	// print it on the real screen
-	refresh();
+//	printw("TYPE ANY CHARACTER\n");
+//	int ch = getch();
+//	if (ch == KEY_F(1)) {
+//		printw("F1 key pressed\n");
+//	} else {
+//		printw("The key pressed is ");
+//		attron(A_BOLD);
+//		printw("%c", ch);
+//		attroff(A_BOLD);
+//	}
 
-	printw("\nTEST TO SEE IF PRINT");
 
-	// wait for user input
-	getch();
+	// start adding some colors
+	start_color();
+	// 1st is paddle color, then ball color, then brick color
+	init_pair(1, COLOR_CYAN, COLOR_BLACK);
+	init_pair(2, COLOR_RED, COLOR_BLACK);
+	init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+
+	// draw a border around the screen
+	box(stdscr, 0, 0);
+
+	// set the paddle x outside the loop
+	int paddle_x = 10;
+
+	// getch() won't block the game loop so game will
+	// keep running when player does not press anything
+	nodelay(stdscr, TRUE);
+
+	// start the game while loop
+	while(1) {
+		int ch = getch();
+		// quit if q is typed
+		if (ch == 'q') break;
+		
+		// be able to move paddle to the left and right
+		if (ch == KEY_LEFT && paddle_x > 1) {
+			paddle_x--;
+		}
+		if (ch == KEY_RIGHT && paddle_x < 30) {
+			paddle_x++;
+		}
+
+		// erase the screen to wipe internal buffer only`
+		erase();
+		box(stdscr, 0, 0);
+
+		// draw the paddle on the screen
+		attron(COLOR_PAIR(1));
+		mvprintw(20, paddle_x, PADDLE);
+		attroff(COLOR_PAIR(1));
+
+		// draw the ball on the screen
+		attron(COLOR_PAIR(2));
+		mvprintw(10, 15, BALL);
+		attroff(COLOR_PAIR(2));
+
+		// draw the a couple bricks near the top of the window
+		attron(COLOR_PAIR(3));
+		mvprintw(3, 5, BRICK);
+		mvprintw(3, 12, BRICK);
+		mvprintw(3, 18, BRICK);
+		attroff(COLOR_PAIR(3));
+
+		// draw a basic side panel
+	        mvprintw(3, 40, "Score: 0");
+		mvprintw(4, 40, "Lives: 3");
+		mvprintw(5, 40, "Level: 1");
+
+		// push everything to the real screen
+		refresh();
+		// 60 fps
+		napms(16);
+	}
+
+
 
 	// end curses mode
 	endwin();
