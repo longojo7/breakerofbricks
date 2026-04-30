@@ -1,9 +1,10 @@
 // hellow world ncurses test
 
 #include <ncurses.h>
-#define PADDLE "<====>"
+#define PADDLE "<=====>"
 #define BALL   "o"
 #define BRICK  "####"
+#define BRICK_WIDTH 5
 
 int main() {
 	// start curses mode
@@ -43,14 +44,15 @@ int main() {
 	start_color();
 	// 1st is paddle color, then ball color, then brick color
 	init_pair(1, COLOR_CYAN, COLOR_BLACK);
-	init_pair(2, COLOR_RED, COLOR_BLACK);
-	init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(2, COLOR_WHITE, COLOR_BLACK);
+	init_pair(3, COLOR_RED, COLOR_RED);
 
 	// draw a border around the screen
 	box(stdscr, 0, 0);
 
 	// set the paddle x outside the loop
-	int paddle_x = 10;
+	int paddle_x = 17;
+	int ball_x = 20;
 
 	// getch() won't block the game loop so game will
 	// keep running when player does not press anything
@@ -65,9 +67,11 @@ int main() {
 		// be able to move paddle to the left and right
 		if (ch == KEY_LEFT && paddle_x > 1) {
 			paddle_x--;
+			ball_x--;
 		}
-		if (ch == KEY_RIGHT && paddle_x < 30) {
+		if (ch == KEY_RIGHT && paddle_x < 33) {
 			paddle_x++;
+			ball_x++;
 		}
 
 		// erase the screen to wipe internal buffer only`
@@ -81,20 +85,24 @@ int main() {
 
 		// draw the ball on the screen
 		attron(COLOR_PAIR(2));
-		mvprintw(10, 15, BALL);
+		mvprintw(19, ball_x, BALL);
 		attroff(COLOR_PAIR(2));
 
 		// draw the a couple bricks near the top of the window
 		attron(COLOR_PAIR(3));
-		mvprintw(3, 5, BRICK);
-		mvprintw(3, 12, BRICK);
-		mvprintw(3, 18, BRICK);
+		// use a for loop to draw a row of brick
+		int brick_start = 1;
+		for (int i = 0; i < 5; i += 2) {
+			for (int j = 0; j < 8; j++) {
+				mvprintw(3 + i, brick_start + (BRICK_WIDTH * j), BRICK);
+			}
+		}
 		attroff(COLOR_PAIR(3));
 
 		// draw a basic side panel
-	        mvprintw(3, 40, "Score: 0");
-		mvprintw(4, 40, "Lives: 3");
-		mvprintw(5, 40, "Level: 1");
+	        mvprintw(3, 45, "Score: 0");
+		mvprintw(4, 45, "Lives: 3");
+		mvprintw(5, 45, "Level: 1");
 
 		// push everything to the real screen
 		refresh();
