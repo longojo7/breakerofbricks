@@ -1,10 +1,31 @@
 // hellow world ncurses test
 
 #include <ncurses.h>
+
+// definitions for constants
+#define G_HEIGHT 24
+#define G_WIDTH 41
+#define S_WIDTH 20
+#define PADDLE_Y G_HEIGHT-2
+#define BALL_Y G_HEIGHT-3
 #define PADDLE "<=====>"
 #define BALL   "o"
 #define BRICK  "####"
 #define BRICK_WIDTH 5
+
+WINDOW* create_game_win(int start_y, int start_x) {
+	WINDOW* game_win = newwin(G_HEIGHT, G_WIDTH, start_y, start_x);
+	box(game_win, 0, 0);
+	wrefresh(game_win);
+	return game_win;
+}
+
+WINDOW* create_score_win(int start_y, int start_x) {
+	WINDOW* score_win = newwin(G_HEIGHT, S_WIDTH, start_y, start_x);
+	box(score_win, 0, 0);
+	wrefresh(score_win);
+	return score_win;
+}
 
 int main() {
 	// start curses mode
@@ -17,7 +38,7 @@ int main() {
 	noecho();
 	// hide the cursor
 	curs_set(0);
-
+	
 	// check if the terminal supports colors
 	if (has_colors() == FALSE) {
 		printw("Your terminal does not support color.\n");
@@ -28,27 +49,22 @@ int main() {
 		return 1;
 	}
 
-//	printw("TYPE ANY CHARACTER\n");
-//	int ch = getch();
-//	if (ch == KEY_F(1)) {
-//		printw("F1 key pressed\n");
-//	} else {
-//		printw("The key pressed is ");
-//		attron(A_BOLD);
-//		printw("%c", ch);
-//		attroff(A_BOLD);
-//	}
-
-
 	// start adding some colors
 	start_color();
+	// darkened red a little bit
+	init_color(COLOR_RED, 700, 0, 0);
 	// 1st is paddle color, then ball color, then brick color
 	init_pair(1, COLOR_CYAN, COLOR_BLACK);
 	init_pair(2, COLOR_WHITE, COLOR_BLACK);
 	init_pair(3, COLOR_RED, COLOR_RED);
 
-	// draw a border around the screen
-	box(stdscr, 0, 0);
+	// set the start x and start y to center the two windows
+	int startx = (COLS - (G_WIDTH + S_WIDTH)) / 2;
+	int starty = (LINES - G_HEIGHT) / 2;
+	
+	// create the game and score window
+	WINDOW* game_win = create_game_win(starty, startx);
+	WINDOW* score_win = create_score_win(starty, G_WIDTH + startx);
 
 	// set the paddle x outside the loop
 	int paddle_x = 17;
@@ -74,43 +90,47 @@ int main() {
 			ball_x++;
 		}
 
-		// erase the screen to wipe internal buffer only`
-		erase();
-		box(stdscr, 0, 0);
+		// erase both windows
+		werase(game_win);
+		werase(score_win);
+
+		// redraw borders for each window
+		box(game_win, 0, 0);
+		box(score_win, 0, 0);
 
 		// draw the paddle on the screen
-		attron(COLOR_PAIR(1));
-		mvprintw(20, paddle_x, PADDLE);
-		attroff(COLOR_PAIR(1));
+		wattron(game_win, COLOR_PAIR(1));
+		mvwprintw(game_win, PADDLE_Y, paddle_x, PADDLE);
+		wattroff(game_win, COLOR_PAIR(1));
 
 		// draw the ball on the screen
-		attron(COLOR_PAIR(2));
-		mvprintw(19, ball_x, BALL);
-		attroff(COLOR_PAIR(2));
+		wattron(game_win, COLOR_PAIR(2));
+		mvwprintw(game_win, BALL_Y, ball_x, BALL);
+		wattroff(game_win, COLOR_PAIR(2));
 
 		// draw the a couple bricks near the top of the window
-		attron(COLOR_PAIR(3));
+		wattron(game_win, COLOR_PAIR(3));
 		// use a for loop to draw a row of brick
 		int brick_start = 1;
 		for (int i = 0; i < 5; i += 2) {
 			for (int j = 0; j < 8; j++) {
-				mvprintw(3 + i, brick_start + (BRICK_WIDTH * j), BRICK);
+				mvwprintw(game_win, 1 + i, brick_start + (BRICK_WIDTH * j), BRICK);
 			}
 		}
-		attroff(COLOR_PAIR(3));
+		wattroff(game_win, COLOR_PAIR(3));
+
+		// push game window
+		wrefresh(game_win);
 
 		// draw a basic side panel
-	        mvprintw(3, 45, "Score: 0");
-		mvprintw(4, 45, "Lives: 3");
-		mvprintw(5, 45, "Level: 1");
+	        mvwprintw(score_win, 3, 6, "Score: 0");
+		mvwprintw(score_win, 4, 6, "Lives: 3");
+		mvwprintw(score_win, 5, 6, "Level: 1");
+		wrefresh(score_win);
 
-		// push everything to the real screen
-		refresh();
 		// 60 fps
 		napms(16);
 	}
-
-
 
 	// end curses mode
 	endwin();
