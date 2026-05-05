@@ -66,9 +66,12 @@ int main() {
 	WINDOW* game_win = create_game_win(starty, startx);
 	WINDOW* score_win = create_score_win(starty, G_WIDTH + startx);
 
-	// set the paddle x outside the loop
-	int paddle_x = 17;
-	int ball_x = 20;
+	// initialize coordinates and deltas
+	int paddle_x = (G_WIDTH - 2) / 2 - 2;
+	int ball_x = (G_WIDTH - 2) / 2 + 1;
+	int ball_y = BALL_Y;
+	int ball_dx = 1;
+	int ball_dy = -1;
 
 	// getch() won't block the game loop so game will
 	// keep running when player does not press anything
@@ -90,6 +93,14 @@ int main() {
 			ball_x++;
 		}
 
+		// update the ball position
+		ball_x += ball_dx;
+		ball_y += ball_dy;
+
+		// check if the ball is bouncing off the wall
+		if (ball_x <= 1 || ball_x >= G_WIDTH - 2) ball_dx = -ball_dx;
+		if (ball_y <= 1 || ball_y >= G_HEIGHT - 2) ball_dy = -ball_dy;
+
 		// erase both windows
 		werase(game_win);
 		werase(score_win);
@@ -105,7 +116,7 @@ int main() {
 
 		// draw the ball on the screen
 		wattron(game_win, COLOR_PAIR(2));
-		mvwprintw(game_win, BALL_Y, ball_x, BALL);
+		mvwprintw(game_win, ball_y, ball_x, BALL);
 		wattroff(game_win, COLOR_PAIR(2));
 
 		// draw the a couple bricks near the top of the window
@@ -129,7 +140,7 @@ int main() {
 		wrefresh(score_win);
 
 		// 60 fps
-		napms(16);
+		napms(80);
 	}
 
 	// end curses mode
